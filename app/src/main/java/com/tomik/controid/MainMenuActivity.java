@@ -7,10 +7,9 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -50,6 +49,7 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
         mLinearAcceleration = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
         //mRotationVector = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
         //mMagneticField = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        prevAccel = null;
     }
 
     @Override
@@ -73,12 +73,13 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
 
         return super.onOptionsItemSelected(item);
     }
+
     static final float NS2S = 1.0f / 1000000000.0f;
-    float[] last_values = null;
+    float[] prevAccel = null;
     float[] velocity = null;
     float[] position = null;
-    float[] acceleration = null;
-    boolean calibrationPressed = false;
+    float[] accel = null;
+    boolean calibrationPressed = true;
     float xCalibratedFix = 0;
     float yCalibratedFix = 0;
     float zCalibratedFix = 0;
@@ -87,10 +88,21 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
 
     private final float[] mRotationMatrix = new float[9];
     private final float[] mOrientationAngles = new float[3];
+    private final float accelKFactor = (float) 0.9;
 
-    private int idxAll=0;
-    private final int idxAllMax=100000;
-    private float[][] allReadings = new float[idxAllMax][3];
+    public int IdxAll = 0;
+    public final int IdxAllMax = 100000;
+    public float[][] AllReadingsAccel = new float[IdxAllMax][3];
+    public float[][] AllReadingsVel = new float[IdxAllMax][3];
+    public float[][] AllReadingsPos = new float[IdxAllMax][3];
+    public float[][] AllReadingsRot = new float[IdxAllMax][3];
+
+    public int X=0;
+    public int Y=1;
+    public int Z=2;
+    private int maxMeasur = 8;
+    private int lastTmp = 0;
+    public float[][] LastMeasur = new float[maxMeasur][3];
 
     @SuppressLint({"SetTextI18n", "DefaultLocale"})
     @Override
@@ -114,11 +126,12 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
                 break;*/
             case Sensor.TYPE_LINEAR_ACCELERATION:
 
-                if (last_values == null) {
-                    last_values = new float[3];
-                    acceleration = new float[3];
+                if (prevAccel == null) {
+                    prevAccel = new float[3];
+                    accel = new float[3];
                     velocity = new float[3];
                     position = new float[3];
+                    prevAccel[0] = prevAccel[1] = prevAccel[2] = 0f;
                     velocity[0] = velocity[1] = velocity[2] = 0f;
                     position[0] = position[1] = position[2] = 0f;
                     break;
@@ -128,50 +141,68 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
                 last_timestamp = event.timestamp;
                 if (calibrationPressed) {
                     Calibrate(event.values, dt);
-                    idxAll=0;
+                    IdxAll = 0;
                     break;
                 }
-                //pomysły
-                //znajdować dłuższy ruch jednostajny
-                //wychwytywać gwałtowną zmianę zwrotu
 
                 for (int index = 0; index < 3; ++index) {
-                    acceleration[index] = event.values[index];
-                    allReadings[idxAll%idxAllMax][index] = event.values[index];
+                    accel[index] = event.values[index];
+
                     //eliminacja drgań
-                    if (Math.abs(acceleration[index])<0.006)
-                        acceleration[index]=0;
-                    if (Math.abs(acceleration[index])>10)
-                        acceleration[index]=10;
+                    if (Math.abs(accel[index])<1.2)
+                        accel[index]=0;
+                    //if (Math.abs(accel[index])>10)
+                    //    accel[index]=10;
+                    AllReadingsAccel[IdxAll % IdxAllMax][index] = accel[index];
 
                     float last_velocity = velocity[index];
-                    velocity[index] += (acceleration[index] + last_values[index]) / 2 * dt;
-                    //jak jednostajny to znaczy, że prawd. stoi
-                    if (Math.abs(last_velocity-velocity[index])<0.06)
-                        velocity[index]=0;
-                    //hamowanie
-                    /*if (velocity[index]>0) {
-                        velocity[index] -= 0.01;
-                        if (velocity[index] <= 0)
-                            velocity[index] = 0;
-                    }
-                    else {
-                        velocity[index] += 0.01;
-                        if (velocity[index] >= 0)
-                            velocity[index] = 0;
-                    }*/
+                    velocity[index] += (accel[index] + prevAccel[index]) / 2 * dt;
+                    AllReadingsVel[IdxAll % IdxAllMax][index] = velocity[index];
                     position[index] += (velocity[index] + last_velocity) / 2 * dt;
-                    last_values[index] = acceleration[index];
+                    AllReadingsPos[IdxAll % IdxAllMax][index] = position[index];
+                    prevAccel[index] = accel[index];
                 }
-                idxAll++;
+                IdxAll++;
                 SensorLinearAccelerationTV.setText(String.format("%.2f", position[0]) + " " +
                         String.format("%.2f", position[1]) + " " +
                         String.format("%.2f", position[2]));
+
+
+                for (int i=0;i<lastTmp;i++)
+                    for (int j=0;j<3;j++)
+                        LastMeasur[i][j] = LastMeasur[i+1][j];
+                for (int j=0;j<3;j++)
+                    LastMeasur[lastTmp][j] = accel[j];
+                if (lastTmp<maxMeasur-1) lastTmp++;
+                DetectMoves();
+
                 break;
+                case Sensor.TYPE_GYROSCOPE:
+                    break;
             default:
                 break;
         }
         // Do something with this sensor value.
+    }
+
+    private void DetectMoves() {
+        if (checkForJump())
+            Log.i("SKOK","!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    }
+
+    private final int jumpCooldown = 4;
+    private int lastJump=0;
+    private boolean checkForJump() {
+        if (lastJump>0) {
+            lastJump--;
+            return false;
+        }
+        if ((LastMeasur[maxMeasur-1][Y]>6 || LastMeasur[maxMeasur-2][Y]>6) && (Math.abs(LastMeasur[maxMeasur-3][Y])<2.5 || LastMeasur[maxMeasur-2][Y]<2.5) &&
+                !(LastMeasur[maxMeasur-2][Z]<-5.5 || LastMeasur[maxMeasur-3][Z]<-5.5)) {
+            lastJump = jumpCooldown;
+            return true;
+        }
+        return false;
     }
 
     float xCal = 0;
@@ -191,7 +222,7 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
         xCalibratedFix = xCal / calibrationTime;
         yCalibratedFix = yCal / calibrationTime;
         zCalibratedFix = zCal / calibrationTime;
-        last_values=null;
+        prevAccel = null;
     }
 
     @Override
@@ -212,7 +243,7 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
     protected void onPause() {
         super.onPause();
         //TODO jeśli po wyłączeniu ekranu nie będzie zbierało danych to przez tą funkcję
-        mSensorManager.unregisterListener(this);
+        //mSensorManager.unregisterListener(this);
     }
 
     public void Calibration(View view) {
