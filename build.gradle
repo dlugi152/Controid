@@ -7,7 +7,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.android.tools.build:gradle:3.1.2'
         
 
         // NOTE: Do not place your application dependencies here; they belong
@@ -19,13 +19,6 @@ allprojects {
     repositories {
         google()
         jcenter()
-    }
-}
-task doLogcata(type: Exec){
-    doLast {
-        workingDir 'D:/sdk/platform-tools'
-        commandLine '.\\adb.exe logcat -d > plik.txt'
-        println 'Wykonano task'
     }
 }
 

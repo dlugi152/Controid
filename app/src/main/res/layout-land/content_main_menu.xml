@@ -12,8 +12,10 @@
         android:id="@+id/AccelerometerTextID"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="280dp"
+        android:layout_marginStart="280dp"
         android:layout_marginTop="76dp"
+        android:fontFamily="monospace"
+        android:includeFontPadding="true"
         android:text="odczyty"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -24,6 +26,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="288dp"
         android:layout_marginTop="192dp"
+        android:fontFamily="monospace"
+        android:includeFontPadding="true"
         android:text="odczyty2"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
