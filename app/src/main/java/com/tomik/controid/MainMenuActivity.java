@@ -198,25 +198,26 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
     private int lastSide = 0;
 
     private boolean checkForSide(boolean sign) {
-        if (lastJump > 0 || lastCrouch > 0)
-            return false;
+        /*if (lastJump > 0 || lastCrouch > 0)
+            return false;*/
         if (lastSide > 0) {
             lastSide--;
             return false;
         }
         int s;
-        if (sign)
-            s = -1;
-        else
-            s = 1;
-        if (LastMeasur.get(maxMeasur - 1)[X] * s > 2.5 && LastMeasur.get(maxMeasur - 2)[X] * s < 2.5)
-        //Math.abs(LastMeasur[maxMeasur - 2][X]) == 0)
-        //&& !(LastMeasur[maxMeasur-2][X]<-5.5 || LastMeasur[maxMeasur-3][X]<-5.5))
-        {
-            lastSide = sideCooldown;
-            return true;
-        }
-        return false;
+        float cmpX = 1000;
+        if (sign) s = -1;
+        else s = 1;
+        cmpX *= s;
+        for (int i = LastMeasur.size() - 2; LastMeasur.size() - 1 - i < 4; i--)
+            if (sign)
+                cmpX = Math.max(cmpX, LastMeasur.get(i)[X]);
+            else
+                cmpX = Math.min(cmpX, LastMeasur.get(i)[X]);
+
+        if (LastMeasur.get(maxMeasur - 1)[X] * s <= 2.3 || cmpX * s >= -2.3) return false;
+        lastSide = sideCooldown;
+        return true;
     }
 
     private final int crouchCooldown = 6;
@@ -242,7 +243,7 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
             lastJump--;
             return false;
         }
-        if (Math.abs(LastMeasur.get(maxMeasur - 1)[Y]) < 4.5 && Math.abs(LastMeasur.get(maxMeasur - 2)[Y]) < 4.5)
+        if (Math.abs(LastMeasur.get(maxMeasur - 1)[Y]) < 5 && Math.abs(LastMeasur.get(maxMeasur - 2)[Y]) < 5)
             return false;
         lastJump = jumpCooldown;
         return true;
