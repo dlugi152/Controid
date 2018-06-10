@@ -2,4 +2,5 @@
     <string name="app_name" translatable="false">Controid</string>
     <string name="action_settings">Settings</string>
     <string name="reset_button">Reset</string>
+    <string name="find_server">Wyszukaj serwer</string>
 </resources>

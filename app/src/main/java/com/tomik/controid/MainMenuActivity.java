@@ -6,6 +6,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -13,17 +14,24 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
+import android.view.ViewParent;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 
 import java.util.LinkedList;
+import java.util.List;
+
+import static java.lang.Thread.sleep;
 
 public class MainMenuActivity extends AppCompatActivity implements SensorEventListener {
 
-    public TextView SensorLinearAccelerationTV;
-    public TextView SensorSignificantMotionTV;
+    //public TextView SensorLinearAccelerationTV;
+    //public TextView SensorSignificantMotionTV;
     private SensorManager mSensorManager;
     private Sensor mLinearAcceleration;
     private Sensor mGameVector;
+    private LinearLayout serversLinearLayout;
     private long delay = 2;
 
     @Override
@@ -33,8 +41,9 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        SensorLinearAccelerationTV = findViewById(R.id.AccelerometerTextID);
-        SensorSignificantMotionTV = findViewById(R.id.SignificantMotionTextID);
+        //SensorLinearAccelerationTV = findViewById(R.id.AccelerometerTextID);
+        //SensorSignificantMotionTV = findViewById(R.id.SignificantMotionTextID);
+        serversLinearLayout = findViewById(R.id.serversLinearLayout);
         //do sensorów
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         //inicjalizacja czujników
@@ -134,10 +143,10 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
                 DetectMoves();
 
                 //wypisanie na ekran
-                SensorLinearAccelerationTV.setText(String.format("%+.2f", accel[X]) + " " +
+                /*SensorLinearAccelerationTV.setText(String.format("%+.2f", accel[X]) + " " +
                         String.format("%+.2f", accel[Y]) + " " +
                         String.format("%+.2f", accel[Z]) + " " +
-                        String.format("%+.2f", sum));
+                        String.format("%+.2f", sum));*/
                 break;
             }
             case Sensor.TYPE_GAME_ROTATION_VECTOR:
@@ -146,9 +155,9 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
                 if (delay > 0)
                     calibrationPressed = true;
                 updateOrientation(event.values);
-                SensorSignificantMotionTV.setText(String.format("%+.2f", rotation[X]) + " " +
+                /*SensorSignificantMotionTV.setText(String.format("%+.2f", rotation[X]) + " " +
                         String.format("%+.2f", rotation[Y]) + " " +
-                        String.format("%+.2f", rotation[Z]));
+                        String.format("%+.2f", rotation[Z]));*/
                 break;
             default:
                 break;
@@ -280,5 +289,45 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
 
     public void Calibration(View view) {
         calibrationPressed = true;
+    }
+
+    public void ChooseServer(View view, int id) {
+        Log.i("tag","wybrano " + id);
+    }
+
+    private int servId=0;
+    boolean searching=false;
+    final public List<Button> buttons = new LinkedList<>();
+
+    public void SearchForServers(View view) {
+        if (buttons.size() == 0) for (int i = 0; i < 100; i++) {
+            Button button = new Button(this);
+            final int finalI = i;
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    ChooseServer(view, finalI);
+                }
+            });
+            buttons.add(button);
+        }
+        if (searching)
+            return;
+        searching = true;
+        serversLinearLayout.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                //ScrollView parent = (ScrollView)serversLinearLayout.getParent();
+                //parent.removeAllViews();
+                //parent.addView(serversLinearLayout);
+                for (int i = 0; i < 3; i++) {
+                    Button newButton = buttons.get(servId);
+                    newButton.setText("serwer " + servId);
+                    serversLinearLayout.addView(newButton);
+                    servId++;
+                }
+                searching = false;
+            }
+        }, 1000);
     }
 }
