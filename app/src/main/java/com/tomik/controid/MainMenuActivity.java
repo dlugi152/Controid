@@ -19,9 +19,13 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.List;
 
+import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 
 public class MainMenuActivity extends AppCompatActivity implements SensorEventListener {
@@ -53,6 +57,21 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
             LastRotation.add(new Float[]{0f, 0f, 0f});
             LastMeasur.add(new Float[]{0f, 0f, 0f});
         }
+        NetworkManager.instance.disableNetwork();
+        NetworkManager.instance.runSerwer();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(true){
+                    try {
+                        NetworkManager.instance.update();
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
     }
 
     @Override
@@ -293,6 +312,14 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
 
     public void ChooseServer(View view, int id) {
         Log.i("tag","wybrano " + id);
+        Button button = buttons.get(id);
+        InetAddress s = null;
+        try {
+            s = InetAddress.getByName(button.getText().toString());
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        NetworkManager.instance.connectToSerwer(new InetSocketAddress(s,11000));
     }
 
     private int servId=0;
@@ -322,7 +349,7 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
                 //parent.addView(serversLinearLayout);
                 for (int i = 0; i < 3; i++) {
                     Button newButton = buttons.get(servId);
-                    newButton.setText("serwer " + servId);
+                    newButton.setText("192.168.0.104");
                     serversLinearLayout.addView(newButton);
                     servId++;
                 }
