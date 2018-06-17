@@ -686,6 +686,23 @@ public class NetworkManager {
                 break;
         }
     }
+
+    public void sendMove(int i) {
+        switch (i){
+            case 0:
+                instance.sendToComputer(new Q_JUMP(), serverIp);
+                break;
+            //case 1:
+              //  instance.sendToComputer(new Q_CROUCH(), serverIp);
+                //break;
+            case 2:
+                instance.sendToComputer(new Q_LEFT(), serverIp);
+                break;
+            case 3:
+                instance.sendToComputer(new Q_RIGHT(), serverIp);
+                break;
+        }
+    }
     /*public void SetGameInstance(MainGame mainGame) {
         if (GameInstance == null)
             GameInstance = mainGame;

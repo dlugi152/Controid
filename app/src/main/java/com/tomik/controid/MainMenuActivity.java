@@ -204,14 +204,23 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
     }
 
     private void DetectMoves() {
-        if (checkForJump())
+        if (checkForJump()) {
             Log.i("SKOK", "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            NetworkManager.instance.sendMove(0);
+        }
         if (checkForCrouch())//skok przed kucaniem
+        {
             Log.i("KUCNIĘCIE", "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        if (checkForLeft())
+            NetworkManager.instance.sendMove(1);
+        }
+        if (checkForLeft()) {
             Log.i("LEWO", "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        if (checkForRight())
+            NetworkManager.instance.sendMove(2);
+        }
+        if (checkForRight()) {
             Log.i("PRAWO", "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            NetworkManager.instance.sendMove(3);
+        }
     }
 
     private boolean checkForRight() {
