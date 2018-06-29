@@ -33,7 +33,7 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
     private LinearLayout serversLinearLayout;
     private long delay = 2;
     private EditText ipAddressEditText;
-    private long tmpRotTime =0 ;
+    private long tmpRotTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +45,7 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
         //SensorLinearAccelerationTV = findViewById(R.id.AccelerometerTextID);
         //SensorSignificantMotionTV = findViewById(R.id.SignificantMotionTextID);
         serversLinearLayout = findViewById(R.id.serversLinearLayout);
-        ipAddressEditText = findViewById(R.id.editText3);
+        ipAddressEditText = findViewById(R.id.providedIpEditText);
         //do sensorów
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         //inicjalizacja czujników
@@ -61,8 +61,13 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
         new Thread(new Runnable() {
             @Override
             public void run() {
-                while(true) {
-                    NetworkManager.instance.update();
+                while (true) {
+                    try {
+                        NetworkManager.instance.update();
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }).start();
@@ -163,8 +168,8 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
                 System.arraycopy(accel, 0, AllReadingsAccel[IdxAll % IdxAllMax], 0, accel.length);
                 System.arraycopy(rotation, 0, AllReadingsRot[IdxAll % IdxAllMax], 0, rotation.length);
                 long accelEnd = System.currentTimeMillis();
-                AllReadingsRot[IdxAll%IdxAllMax][0] = accelEnd - accelStart;
-                AllReadingsRot[IdxAll%IdxAllMax][1] = tmpRotTime;
+                AllReadingsRot[IdxAll % IdxAllMax][0] = accelEnd - accelStart;
+                AllReadingsRot[IdxAll % IdxAllMax][1] = tmpRotTime;
                 IdxAll++;
                 break;
             }
@@ -323,7 +328,7 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
     }
 
     public void ChooseServer(View view, int id) {
-        Log.i("tag","wybrano " + id);
+        Log.i("tag", "wybrano " + id);
         Button button = buttons.get(id);
         InetAddress s = null;
         try {
@@ -331,21 +336,21 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        NetworkManager.instance.connectToSerwer(new InetSocketAddress(s,11000));
+        NetworkManager.instance.connectToSerwer(new InetSocketAddress(s, 11000));
     }
 
-    private int servId=0;
-    boolean searching=false;
+    private int servId = 0;
+    boolean searching = false;
     final public List<Button> buttons = new LinkedList<>();
 
-    public void ManualConnect(View view){
+    public void ManualConnect(View view) {
         InetAddress s = null;
         try {
             s = InetAddress.getByName(ipAddressEditText.getText().toString());
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        NetworkManager.instance.connectToSerwer(new InetSocketAddress(s,11000));
+        NetworkManager.instance.connectToSerwer(new InetSocketAddress(s, 11000));
     }
 
     public void SearchForServers(View view) {
