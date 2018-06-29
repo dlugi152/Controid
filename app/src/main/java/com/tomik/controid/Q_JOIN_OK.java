@@ -15,7 +15,7 @@ public class Q_JOIN_OK extends Q_OBJECT //obiekt oznaczający fakt dołączenia 
             InetSocketAddress ip = queuePack.endpoint;
             NetworkManager.instance.acceptJoin(ip);
             //MenuManager.instance.setClientMenu();
-            Log.i("network", "Q_JOIN_OK done.");
+            Log.i("network", "Q_JOIN_OK done." + System.currentTimeMillis());
             //zmiana menu
         }
     }

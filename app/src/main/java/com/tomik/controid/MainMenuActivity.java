@@ -6,7 +6,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -14,19 +13,15 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewParent;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.List;
-
-import static java.lang.Thread.currentThread;
-import static java.lang.Thread.sleep;
 
 public class MainMenuActivity extends AppCompatActivity implements SensorEventListener {
 
@@ -37,6 +32,8 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
     private Sensor mGameVector;
     private LinearLayout serversLinearLayout;
     private long delay = 2;
+    private EditText ipAddressEditText;
+    private long tmpRotTime =0 ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +45,7 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
         //SensorLinearAccelerationTV = findViewById(R.id.AccelerometerTextID);
         //SensorSignificantMotionTV = findViewById(R.id.SignificantMotionTextID);
         serversLinearLayout = findViewById(R.id.serversLinearLayout);
+        ipAddressEditText = findViewById(R.id.editText3);
         //do sensorów
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         //inicjalizacja czujników
@@ -56,19 +54,15 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
         for (int i = 0; i < maxMeasur; i++) {
             LastRotation.add(new Float[]{0f, 0f, 0f});
             LastMeasur.add(new Float[]{0f, 0f, 0f});
+            LastTimeStamps.add(0L);
         }
         NetworkManager.instance.disableNetwork();
         NetworkManager.instance.runSerwer();
         new Thread(new Runnable() {
             @Override
             public void run() {
-                while(true){
-                    try {
-                        NetworkManager.instance.update();
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                while(true) {
+                    NetworkManager.instance.update();
                 }
             }
         }).start();
@@ -115,6 +109,7 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
     private int lastTmp = 0;
     private boolean useRotation = false;
     public LinkedList<Float[]> LastMeasur = new LinkedList<>();
+    public LinkedList<Long> LastTimeStamps = new LinkedList<>();
     public LinkedList<Float[]> LastRotation = new LinkedList<>();
 
     @SuppressLint({"DefaultLocale", "SetTextI18n"})
@@ -122,6 +117,7 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
     public final void onSensorChanged(SensorEvent event) {
         switch (event.sensor.getType()) {
             case Sensor.TYPE_LINEAR_ACCELERATION: {
+                long accelStart = System.currentTimeMillis();
                 System.arraycopy(event.values, 0, accelOrg, 0, 3);
 
                 if (!useRotation) {
@@ -149,13 +145,11 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
                     if (Math.abs(accel[index]) < 1.2)
                         accel[index] = 0;
 
-                System.arraycopy(accel, 0, AllReadingsAccel[IdxAll % IdxAllMax], 0, accel.length);
-                System.arraycopy(rotation, 0, AllReadingsRot[IdxAll % IdxAllMax], 0, rotation.length);
-                IdxAll++;
-
                 //zapisz ostatnie 10 odczytów (używane do analizy zdarzeń)
                 LastRotation.add(new Float[]{rotation[X], rotation[Y], rotation[Z]});
+                LastTimeStamps.add(event.timestamp);
                 LastMeasur.add(new Float[]{accel[X], accel[Y], accel[Z]});
+                LastTimeStamps.removeFirst();
                 LastRotation.removeFirst();
                 LastMeasur.removeFirst();
                 //wykryj zdarzenia
@@ -166,9 +160,16 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
                         String.format("%+.2f", accel[Y]) + " " +
                         String.format("%+.2f", accel[Z]) + " " +
                         String.format("%+.2f", sum));*/
+                System.arraycopy(accel, 0, AllReadingsAccel[IdxAll % IdxAllMax], 0, accel.length);
+                System.arraycopy(rotation, 0, AllReadingsRot[IdxAll % IdxAllMax], 0, rotation.length);
+                long accelEnd = System.currentTimeMillis();
+                AllReadingsRot[IdxAll%IdxAllMax][0] = accelEnd - accelStart;
+                AllReadingsRot[IdxAll%IdxAllMax][1] = tmpRotTime;
+                IdxAll++;
                 break;
             }
             case Sensor.TYPE_GAME_ROTATION_VECTOR:
+                long rotationStart = System.currentTimeMillis();
                 if (rotation == null)
                     break;
                 if (delay > 0)
@@ -177,6 +178,8 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
                 /*SensorSignificantMotionTV.setText(String.format("%+.2f", rotation[X]) + " " +
                         String.format("%+.2f", rotation[Y]) + " " +
                         String.format("%+.2f", rotation[Z]));*/
+                long rotationEnd = System.currentTimeMillis();
+                tmpRotTime = rotationEnd - rotationStart;
                 break;
             default:
                 break;
@@ -304,8 +307,8 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
     @Override
     protected void onResume() {
         super.onResume();
-        mSensorManager.registerListener(this, mLinearAcceleration, SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener(this, mGameVector, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this, mLinearAcceleration, SensorManager.SENSOR_DELAY_GAME);
+        mSensorManager.registerListener(this, mGameVector, SensorManager.SENSOR_DELAY_GAME);
     }
 
     @Override
@@ -335,6 +338,16 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
     boolean searching=false;
     final public List<Button> buttons = new LinkedList<>();
 
+    public void ManualConnect(View view){
+        InetAddress s = null;
+        try {
+            s = InetAddress.getByName(ipAddressEditText.getText().toString());
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        NetworkManager.instance.connectToSerwer(new InetSocketAddress(s,11000));
+    }
+
     public void SearchForServers(View view) {
         if (buttons.size() == 0) for (int i = 0; i < 100; i++) {
             Button button = new Button(this);
@@ -356,7 +369,7 @@ public class MainMenuActivity extends AppCompatActivity implements SensorEventLi
                 //ScrollView parent = (ScrollView)serversLinearLayout.getParent();
                 //parent.removeAllViews();
                 //parent.addView(serversLinearLayout);
-                for (int i = 0; i < 3; i++) {
+                for (int i = 0; i < 1; i++) {
                     Button newButton = buttons.get(servId);
                     newButton.setText("192.168.0.104");
                     serversLinearLayout.addView(newButton);

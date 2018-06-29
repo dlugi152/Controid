@@ -8,13 +8,11 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.ArrayDeque;
@@ -299,6 +297,7 @@ public class NetworkManager {
         //setStateEnabled();
         if (getNetworkState() != NetworkState.NET_DISABLED) {
             joinSemaphore = ip;
+            serverIp = ip;
             joiner = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -307,6 +306,7 @@ public class NetworkManager {
             });
             joiner.start();
             instance.sendToComputer(new Q_JOIN_REQUEST(), ip);
+            Log.i("Request","wysłany" + System.currentTimeMillis());
         }
     }
 
@@ -341,6 +341,8 @@ public class NetworkManager {
             }
         });
         connector.start();
+        long l = System.currentTimeMillis();
+        Log.i("request","odebrano" + System.currentTimeMillis());
     }
 
     private void AliveThread() {
@@ -693,7 +695,7 @@ public class NetworkManager {
                 instance.sendToComputer(new Q_JUMP(), serverIp);
                 break;
             //case 1:
-              //  instance.sendToComputer(new Q_CROUCH(), serverIp);
+              //  instance.sendToComputer(new Q_CROUCH(), joinSemaphore);
                 //break;
             case 2:
                 instance.sendToComputer(new Q_LEFT(), serverIp);

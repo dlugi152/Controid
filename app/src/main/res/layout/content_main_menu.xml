@@ -11,7 +11,7 @@
     <ScrollView
         android:id="@+id/scrollView2"
         android:layout_width="368dp"
-        android:layout_height="386dp"
+        android:layout_height="385dp"
         android:layout_marginBottom="5dp"
         android:layout_marginEnd="5dp"
         android:layout_marginStart="5dp"
@@ -32,17 +32,51 @@
 
     <Button
         android:id="@+id/button2"
-        android:layout_width="244dp"
-        android:layout_height="104dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_marginBottom="5dp"
-        android:layout_marginEnd="70dp"
-        android:layout_marginStart="70dp"
-        android:layout_marginTop="5dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="3dp"
         android:onClick="SearchForServers"
         android:text="@string/find_server"
         app:layout_constraintBottom_toTopOf="@+id/scrollView2"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintEnd_toStartOf="@+id/button4"
+        app:layout_constraintHorizontal_bias="0.8"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button4"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="5dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:onClick="ManualConnect"
+        android:text="Połącz"
+        app:layout_constraintBottom_toTopOf="@+id/scrollView2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/button2"
+        app:layout_constraintTop_toBottomOf="@+id/editText3" />
+
+    <EditText
+        android:id="@+id/editText3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:ems="10"
+        android:hint="podaj adres ip"
+        android:inputType="textNoSuggestions|textUri"
+        android:singleLine="true"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/button4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/button2"
+        app:layout_constraintTop_toTopOf="parent" />
+
 </android.support.constraint.ConstraintLayout>
